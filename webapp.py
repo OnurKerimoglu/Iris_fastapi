@@ -14,9 +14,11 @@ class Outputtype(BaseModel):
     # return{'prediction': str(yhat[0])}
     human_readable: str
 
+# load the model
+modelPL = load('iris_bestpipeline.joblib')
+
 # def main():
 #    read_root()
-
 
 @app.get("/app", response_model=Outputtype)
 # the string argument defines the web page
@@ -29,9 +31,6 @@ def read_root(req: Request):
     sepallength = float(req.query_params['sepallength'])
     sepalwidth = float(req.query_params['sepalwidth'])
     sample = [petallength, petalwidth, sepallength, sepalwidth]
-
-    # load the model
-    modelPL = load('iris_bestpipeline.joblib')
 
     # do the prediction
     yhat = modelPL.predict([sample])
