@@ -4,7 +4,15 @@ from pydantic import BaseModel
 from joblib import load
 from fastapi import FastAPI, Request
 
+
+# aws:
+# gunicorn webapp:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8080
+# http://54.91.182.92/app?sepallength=100&sepalwidth=100&petallength=0.2&petalwidth=0.5
+
+# local:
+# uvicorn webapp:app --reload --log-level=debug
 # http://127.0.0.1:8000/app?sepallength=100&sepalwidth=100&petallength=0.2&petalwidth=0.2
+
 app = FastAPI()
 
 
