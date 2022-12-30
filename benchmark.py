@@ -1,5 +1,8 @@
 from locust import HttpUser, between, task
 
+# call:
+# locust -f benchmark.py --headless --host http://0.0.0.0:8000 -u 20 -r 50
+
 class WebsiteUser(HttpUser):
     wait_time = between(2, 4)
 
