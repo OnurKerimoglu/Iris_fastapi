@@ -1,0 +1,51 @@
+ssh -i ~/.ssh/pems/DSR32_v2.pem ubuntu@ec2-54-82-32-107.compute-1.amazonaws.com
+#on the server, install necessary packages and get the code
+sudo apt update && sudo apt upgrade
+sudo apt install python3-venv python3-dev build-essential
+mkdir venvs
+cd ~/venvs
+python3 -m venv tut-productive-ml
+cd tut-productive-ml
+source bin/activate
+pip install -U pip
+#get the repository
+mkdir ~/opt
+cd ~/opt
+git clone https://github.com/OnurKerimoglu/Iris_fastapi.git
+cd Iris_fastapi.git
+pip install -r requirements.txt
+
+#to transfer the trained model from local to server machine
+scp -i ~/Downloads/DSR32_v2.pem iris_bestpipeline.joblib ubuntu@ec2-54-82-32-107.compute-1.amazonaws.com:/home/ubuntu/opt/Iris_fastapi
+#noting that the webapplication is inside webapp.py:
+gunicorn webapp:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8080
+
+#this doesn't work yet. We need to forward port 80 (where browser looks) to 8080
+sudo iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8080
+#repeat the command:
+sudo iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8080
+#now on a local browser:
+http://ec2-54-82-32-107.compute-1.amazonaws.com/app?sepallength=100&sepalwidth=100&petallength=0.2&petalwidth=0.2
+#or:
+http://54.91.182.92/app?sepallength=100&sepalwidth=100&petallength=0.2&petalwidth=0.5
+#should display the model prediction:
+{"prediction":2,"human_readable":"iris_setosa3"}
+#to make this work even after logging out, let's setup a supervisor
+# vim Iris_fastapi_supervisor.conf
+# [program:webservice]
+# command=/home/ubuntu/venvs/Iris-fastapi/bin/gunicorn -k uvicorn.workers.UvicornWorker webapp:app -b 0.0.0.0:8080
+# directory=/home/ubuntu/opt/Iris_fastapi
+# user=ubuntu
+# sudo apt install supervisor
+# sudo ln -s $PWD/Iris_fastapi_supervisor.conf /etc/supervisor/conf.d
+# sudo /etc/init.d/supervisor restart
+
+#benchmarking:
+pip install locust
+#on terminal:
+locust -f benchmark.py --headless --host http://0.0.0.0:8000 -u 1000 -r 50
+#on browser:
+locust -f benchmark.py --host http://ec2-54-82-32-107.compute-1.amazonaws.com -u 1000 -r 50
+#go to:
+http://0.0.0.0:8080/
+
